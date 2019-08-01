@@ -10,12 +10,14 @@ import com.example.myfilternews.model.News;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.security.auth.callback.Callback;
+
 public class NewsImplement implements NewsDao {
     private DBHelper mDbHelper;
     List<News> listNews;
     private static NewsImplement sInstance;
 
-    public NewsImplement(DBHelper dbHelper){
+    public NewsImplement(DBHelper dbHelper) {
         mDbHelper = dbHelper;
     }
 
@@ -28,6 +30,18 @@ public class NewsImplement implements NewsDao {
         contentValues.put(DBHelper.IMAGE_URL, news.getUrlToImage());
         contentValues.put(DBHelper.URL, news.getUrl());
         db.insert(DBHelper.TABLE_NAME, null, contentValues);
+        return true;
+    }
+
+    @Override
+    public boolean addNewsFavorite(News news) {
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(DBHelper.TITLE, news.getTitle());
+        contentValues.put(DBHelper.DESCRIPTION, news.getDescription());
+        contentValues.put(DBHelper.IMAGE_URL, news.getUrlToImage());
+        contentValues.put(DBHelper.URL, news.getUrl());
+        db.insert(DBHelper.TABLE_NAME_FAVORITE, null, contentValues);
         return true;
     }
 
@@ -50,27 +64,49 @@ public class NewsImplement implements NewsDao {
         return listNews;
     }
 
-    private News getNewsFromCursor(Cursor cursor){
+    @Override
+    public List<News> getListNewsFavorite() {
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM " + DBHelper.TABLE_NAME_FAVORITE, null);
+        listNews = getListNewsFromCursor(cursor);
+        return listNews;
+    }
+
+    @Override
+    public boolean deleteNews(String title) {
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+        db.delete(DBHelper.TABLE_NAME, DBHelper.TITLE + " = ? ",
+            new String[]{title});
+        return true;
+    }
+
+    @Override
+    public boolean deleteNewsFavorite(String title) {
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+        db.delete(DBHelper.TABLE_NAME_FAVORITE, DBHelper.TITLE + " = ? ", new String[]{title});
+        return true;
+    }
+
+    private News getNewsFromCursor(Cursor cursor) {
         News news = new News();
         news.setTitle(cursor.getString(cursor.getColumnIndex(DBHelper.TITLE)));
         news.setDescription(cursor.getString(cursor.getColumnIndex(DBHelper.DESCRIPTION)));
         news.setUrlToImage(cursor.getString(cursor.getColumnIndex(DBHelper.IMAGE_URL)));
-        news.setUrlToImage(cursor.getString(cursor.getColumnIndex(DBHelper.URL)));
+        news.setUrl(cursor.getString(cursor.getColumnIndex(DBHelper.URL)));
         return news;
     }
 
     private List<News> getListNewsFromCursor(Cursor cursor) {
         listNews = new ArrayList<>();
-        if(cursor == null) return listNews;
+        if (cursor == null) return listNews;
         cursor.moveToFirst();
-        while (cursor.moveToNext()){
+        while (cursor.moveToNext()) {
             News news = getNewsFromCursor(cursor);
             listNews.add(news);
         }
         cursor.close();
         return listNews;
     }
-
 
     private String[] selection() {
         return new String[]{

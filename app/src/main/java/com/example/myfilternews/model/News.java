@@ -86,5 +86,4 @@ public class News implements Serializable {
         this.content = content;
     }
 
-
 }

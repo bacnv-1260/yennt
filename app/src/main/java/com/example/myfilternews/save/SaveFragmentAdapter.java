@@ -1,34 +1,34 @@
-package com.example.myfilternews.sreen.news;
+package com.example.myfilternews.save;
 
-import android.app.DownloadManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
-import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.myfilternews.R;
 import com.example.myfilternews.dbhelper.DBHelper;
+import com.example.myfilternews.dbhelper.NewsDao;
 import com.example.myfilternews.dbhelper.NewsImplement;
 import com.example.myfilternews.model.News;
 
 import java.util.List;
 
-public class NewsFragmentAdapter extends RecyclerView.Adapter<NewsFragmentAdapter.ViewHolder> {
+public class SaveFragmentAdapter extends RecyclerView.Adapter<SaveFragmentAdapter.ViewHolder> {
     private List<News> mListNews;
     private Context mContext;
-    private NewsImplement mDao;
+    private NewsDao mDao;
+    private News news;
 
-    public NewsFragmentAdapter(List<News> listNews, Context context) {
+    public SaveFragmentAdapter(List<News> listNews, Context context) {
         mListNews = listNews;
         mContext = context;
     }
@@ -36,7 +36,7 @@ public class NewsFragmentAdapter extends RecyclerView.Adapter<NewsFragmentAdapte
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
-        View itemView = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.item_news,
+        View itemView = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.item_save,
             viewGroup, false);
         return new ViewHolder(itemView);
     }
@@ -44,25 +44,7 @@ public class NewsFragmentAdapter extends RecyclerView.Adapter<NewsFragmentAdapte
     @Override
     public void onBindViewHolder(@NonNull final ViewHolder viewHolder, final int i) {
         viewHolder.bindData(mListNews.get(i));
-        viewHolder.setClickListener(new ItemClickListener() {
-            @Override
-            public void onClickItem(int position) {
-                openUrl(mListNews.get(position).getUrl());
-            }
-
-            @Override
-            public void onLongClickItem(int position) {
-                mDao = new NewsImplement(DBHelper.getInstance(mContext));
-                saveNews(position);
-                News news = mListNews.get(position);
-                mDao.addNews(news);
-            }
-        });
-    }
-
-    private void openUrl(String url) {
-        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-        mContext.startActivity(browserIntent);
+        viewHolder.setClickListener(viewHolder);
     }
 
     @Override
@@ -70,47 +52,58 @@ public class NewsFragmentAdapter extends RecyclerView.Adapter<NewsFragmentAdapte
         return mListNews != null ? mListNews.size() : 0;
     }
 
-    public News saveNews(int position) {
-        News news = mListNews.get(position);
-        String url = news.getUrl();
-        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-        request.setTitle(news.getTitle());
-        request.setDescription(news.getDescription());
-        request.setDestinationUri(Uri.parse(news.getUrl()));
-        request
-            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            request.allowScanningByMediaScanner();
-            request.setNotificationVisibility(
-                DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-        }
-        request.setDestinationInExternalFilesDir(mContext, Environment.DIRECTORY_DOWNLOADS, "news" +
-            ".ext");
-        DownloadManager manager =
-            (DownloadManager) mContext.getSystemService(Context.DOWNLOAD_SERVICE);
-        manager.enqueue(request);
-        Toast.makeText(mContext, "Download successfully", Toast.LENGTH_SHORT).show();
-        return mListNews.get(position);
-    }
-
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener,
         View.OnLongClickListener {
         ImageView imageView;
         TextView textViewTitle;
         TextView textViewDescription;
-        ItemClickListener listener;
+        ItemSaveClickListener listener;
 
         public ViewHolder(View view) {
             super(view);
             imageView = view.findViewById(R.id.image_view);
             textViewTitle = view.findViewById(R.id.text_view_title);
             textViewDescription = view.findViewById(R.id.text_view_description);
+            mDao = new NewsImplement(DBHelper.getInstance(mContext));
             view.setOnClickListener(this);
             view.setOnLongClickListener(this);
         }
 
-        public void setClickListener(ItemClickListener itemClickListener) {
-            this.listener = itemClickListener;
+        public void setClickListener(final ViewHolder viewHolder) {
+            listener = new ItemSaveClickListener() {
+                @Override
+                public void onClickItem(int position) {
+                    News news = mListNews.get(getAdapterPosition());
+                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(news.getUrl()));
+                    mContext.startActivity(browserIntent);
+                }
+
+                @Override
+                public void onLongClickItem(int position) {
+                    PopupMenu popupMenu = new PopupMenu(mContext, viewHolder.itemView);
+                    popupMenu.inflate(R.menu.menu_popup);
+                    popupMenu.show();
+                    popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                        @Override
+                        public boolean onMenuItemClick(MenuItem item) {
+                            switch (item.getItemId()){
+                                case R.id.add_favorite:
+                                    News news = mListNews.get(getAdapterPosition());
+                                    mDao.addNewsFavorite(news);
+                                    mListNews.add(news);
+                                    return true;
+                                case R.id.delete_download:
+                                    News news2 = mListNews.get(getAdapterPosition());
+                                    mDao.deleteNews(news2.getTitle());
+                                    mListNews.remove(getAdapterPosition());
+                                    notifyItemRemoved(getAdapterPosition());
+                                    return true;
+                            }
+                            return false;
+                        }
+                    });
+                }
+            };
         }
 
         public void bindData(News news) {
@@ -133,9 +126,9 @@ public class NewsFragmentAdapter extends RecyclerView.Adapter<NewsFragmentAdapte
             listener.onLongClickItem(getLayoutPosition());
             return true;
         }
-    }
 
-    public interface ItemClickListener {
+    }
+    public interface ItemSaveClickListener {
         void onClickItem(int position);
         void onLongClickItem(int position);
     }

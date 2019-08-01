@@ -27,14 +27,26 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class NewsFragment extends Fragment{
+public class NewsFragment extends Fragment implements View.OnClickListener, View.OnLongClickListener{
     private List<News> mListNews;
     private static final String API_KEY = "7257ad280bbe43a5a69295e4a85ea66a";
     private NewsFragmentAdapter newsFragmentAdapter;
     private RecyclerView recyclerView;
-    private SearchView searchView;
     private ProgressDialog progressDialog;
 
+    @Override
+    public void onClick(View v) {
+
+    }
+
+    @Override
+    public boolean onLongClick(View v) {
+        return false;
+    }
+
+    public interface HandleItemClick{
+        void gotoWebView(News news);
+    }
     public NewsFragment() {
     }
 
@@ -57,6 +69,7 @@ public class NewsFragment extends Fragment{
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+        HandleItemClick handleItemClick = (HandleItemClick) context;
     }
 
     public List<News> getDataAPI(){
@@ -78,9 +91,9 @@ public class NewsFragment extends Fragment{
         return mListNews;
     }
 
-    private void showOnNewsFragment(List<News> mListNews) {
+    public void showOnNewsFragment(List<News> mListNews) {
         newsFragmentAdapter = new NewsFragmentAdapter(mListNews, getActivity());
-        recyclerView = getView().findViewById(R.id.recycler_view_news);
+        recyclerView = getActivity().findViewById(R.id.recycler_view_news);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(newsFragmentAdapter);
         progressDialog.dismiss();
