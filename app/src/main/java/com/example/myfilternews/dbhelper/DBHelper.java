@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class DBHelper extends SQLiteOpenHelper{
 
      static final String TABLE_NAME = "news";
+     static final String TABLE_NAME_FAVORITE = "favorite";
      static final String DATA_BASE_NAME = "mNews";
      static final String ID = "id";
      static final String TITLE = "title";
@@ -16,11 +17,18 @@ public class DBHelper extends SQLiteOpenHelper{
 
     private static DBHelper sInstance;
 
-    private static final String query = "CREATE TABLE " + TABLE_NAME + " ( "
+    private static final String QUERY_TABLE_DOWNLOAD = "CREATE TABLE " + TABLE_NAME + " ( "
         + TITLE + " TEXT, "
         + DESCRIPTION + " TEXT, "
         + IMAGE_URL + " TEXT, "
         + URL + " TEXT)";
+
+    private static final String CREATE_TABLE_FAVORITE = "CREATE TABLE " + TABLE_NAME_FAVORITE + " ( "
+        + TITLE + " TEXT, "
+        + DESCRIPTION + " TEXT, "
+        + IMAGE_URL + " TEXT, "
+        + URL + " TEXT)";
+
 
     public static DBHelper getInstance(Context context) {
         if (sInstance == null) {
@@ -35,12 +43,14 @@ public class DBHelper extends SQLiteOpenHelper{
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL(query);
+        db.execSQL(QUERY_TABLE_DOWNLOAD);
+        db.execSQL(CREATE_TABLE_FAVORITE);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS "+ TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS "+ TABLE_NAME_FAVORITE);
         onCreate(db);
     }
 }

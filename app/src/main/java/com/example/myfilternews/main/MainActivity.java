@@ -3,13 +3,13 @@ package com.example.myfilternews.main;
 import android.app.SearchManager;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
@@ -18,14 +18,15 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.widget.Toast;
 
+import com.example.myfilternews.R;
+import com.example.myfilternews.favorite.FavoriteFragment;
 import com.example.myfilternews.model.Articles;
 import com.example.myfilternews.model.News;
+import com.example.myfilternews.save.SaveFragment;
 import com.example.myfilternews.service.NewsAPI;
+import com.example.myfilternews.service.RetrofitClientInstance;
 import com.example.myfilternews.sreen.news.NewsFragment;
 import com.example.myfilternews.sreen.news.NewsFragmentAdapter;
-import com.example.myfilternews.R;
-import com.example.myfilternews.service.RetrofitClientInstance;
-import com.example.myfilternews.save.SaveFragment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +35,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements NewsFragment.HandleItemClick {
     private TabLayout tabLayout;
     private ViewPager viewPager;
     private SearchView searchView;
@@ -62,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
                 List<Fragment> fragments = new ArrayList<>();
                 fragments.add(new NewsFragment());
                 fragments.add(new SaveFragment());
-                fragments.add(new Fragment());
+                fragments.add(new FavoriteFragment());
                 final SimplePagerAdapter simplePagerAdapter =
                     new SimplePagerAdapter(getSupportFragmentManager(), fragments);
                 viewPager.setAdapter(simplePagerAdapter);
@@ -76,6 +77,10 @@ public class MainActivity extends AppCompatActivity {
                         if (i == 1){
                             SaveFragment fragment = (SaveFragment) simplePagerAdapter.getItem(i);
                             fragment.updateListSave();
+                        }else if (i == 2){
+                            FavoriteFragment favoriteFragment =
+                                (FavoriteFragment) simplePagerAdapter.getItem(i);
+                            favoriteFragment.updateFavoriteFragment();
                         }
                     }
 
@@ -140,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
                         listSearch = response.body().getArticles();
                         if(listSearch == null) return;
                         mAdapter = new NewsFragmentAdapter(listSearch, getApplicationContext());
-                        RecyclerView recyclerView = findViewById(R.id.recycler_view_save);
+                        RecyclerView recyclerView = findViewById(R.id.recycler_view_news);
                         recyclerView.setAdapter(mAdapter);
                     }
 
@@ -163,5 +168,10 @@ public class MainActivity extends AppCompatActivity {
     private void initView(){
         tabLayout = findViewById(R.id.tab_layout);
         viewPager = findViewById(R.id.view_pager);
+    }
+
+    @Override
+    public void gotoWebView(News news) {
+
     }
 }

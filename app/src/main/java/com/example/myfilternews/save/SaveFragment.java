@@ -1,5 +1,6 @@
 package com.example.myfilternews.save;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
@@ -12,11 +13,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.example.myfilternews.dbhelper.DBHelper;
-import com.example.myfilternews.model.News;
-import com.example.myfilternews.sreen.news.NewsFragmentAdapter;
-import com.example.myfilternews.dbhelper.NewsImplement;
 import com.example.myfilternews.R;
+import com.example.myfilternews.dbhelper.DBHelper;
+import com.example.myfilternews.dbhelper.NewsImplement;
+import com.example.myfilternews.model.News;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -27,19 +27,16 @@ import java.io.InputStreamReader;
 import java.util.List;
 
 public class SaveFragment extends Fragment {
-    private NewsFragmentAdapter fragmentAdapter;
+    private SaveFragmentAdapter saveFragmentAdapter;
     private List<News> listNewSave;
     private File myFile;
     private RecyclerView recyclerView;
-    private NewsFragmentAdapter newsFragmentAdapter;
     private NewsImplement mDao;
+    private SaveFragmentAdapter.ItemSaveClickListener listener;
 
     public SaveFragment() {
     }
 
-    public static SaveFragment getInstance(News news){
-        return new SaveFragment();
-    }
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,30 +53,28 @@ public class SaveFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-//        readDataFromFolder();
-        recyclerView = getActivity().findViewById(R.id.recycler_view_save);
+        readDataFromFolder();
+        recyclerView = view.findViewById(R.id.recycler_view_save);
         mDao = new NewsImplement(DBHelper.getInstance(getContext()));
         listNewSave = mDao.getListNews();
-        fragmentAdapter = new NewsFragmentAdapter(listNewSave, getActivity());
+        saveFragmentAdapter = new SaveFragmentAdapter(listNewSave, getContext());
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        recyclerView.setAdapter(fragmentAdapter);
+        recyclerView.setAdapter(saveFragmentAdapter);
     }
 
     public void updateListSave(){
-        recyclerView = getActivity().findViewById(R.id.recycler_view_save);
+        recyclerView = getView().findViewById(R.id.recycler_view_save);
         mDao = new NewsImplement(DBHelper.getInstance(getContext()));
         listNewSave = mDao.getListNews();
-        fragmentAdapter = new NewsFragmentAdapter(listNewSave, getActivity());
+        saveFragmentAdapter = new SaveFragmentAdapter(listNewSave, getActivity());
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        recyclerView.setAdapter(fragmentAdapter);
+        recyclerView.setAdapter(saveFragmentAdapter);
     }
 
     private File[] readDataFromFolder(){
         File path =
             getContext().getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
-        Log.d("myTag", "readDataFromFolder: " + path);
         File[] files = path.listFiles();
-        Log.d("files", "readDataFromFolder: " + files);
         for (int i = 0; i < files.length; i++) {
             try {
                 File file = new File(files[i].getPath());
@@ -99,4 +94,5 @@ public class SaveFragment extends Fragment {
         }
         return files;
     }
+
 }
